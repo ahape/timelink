@@ -15,8 +15,8 @@
   >{{ copyLinkText }}</a>
 </div>
 <div>
-  @for (tz of timeZoneList; track tz) {
-    <p>{{ tz }}</p>
+  @for (item of timeZoneList; track item) {
+    <p>{{ item }}</p>
   }
 </div>
 <router-outlet />
