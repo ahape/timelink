@@ -10,4 +10,9 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'timelink';
+  timeValue = "hello";
+
+  change(event: Event) {
+    this.timeValue = (<HTMLInputElement>event.target).value;
+  }
 }
