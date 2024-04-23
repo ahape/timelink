@@ -12,6 +12,11 @@
 .time-input::placeholder {
   color: rgb(225, 225, 225)
 }
+.time-zone {
+  margin-right: 10px;
+  font-size: 28px;
+  line-height: 35px;
+}
 .copy-link {
   line-height: 35px;
   font-size: 28px;

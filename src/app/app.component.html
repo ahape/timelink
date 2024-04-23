@@ -4,13 +4,19 @@
     autofocus
     placeholder="ex 13:25:00"
     type="text"
-    [value]="timeValue"
+    [value]="timeText"
     (input)="change($event)"
   />
+  <span class="time-zone">{{ timeZone }}</span>
   <a class="copy-link"
      href="javascript:void(0)"
      [title]="link"
      (click)="copyLinkToClipboard()"
   >{{ copyLinkText }}</a>
+</div>
+<div>
+  @for (tz of timeZoneList; track tz) {
+    <p>{{ tz }}</p>
+  }
 </div>
 <router-outlet />
