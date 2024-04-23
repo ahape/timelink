@@ -1,11 +1,16 @@
-<div>
+<div class="content">
   <input
+    class="time-input"
     autofocus
+    placeholder="ex 13:25:00"
     type="text"
     [value]="timeValue"
     (input)="change($event)"
   />
-  &nbsp;
-  <code>{{ timeValue }}</code>
+  <a class="copy-link"
+     href="javascript:void(0)"
+     [title]="link"
+     (click)="copyLinkToClipboard()"
+  >{{ copyLinkText }}</a>
 </div>
 <router-outlet />
