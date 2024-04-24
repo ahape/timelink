@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core"
-import { RouterOutlet } from "@angular/router"
+import { RouterOutlet, ActivatedRoute, ParamMap } from "@angular/router"
 
 @Component({
   selector: "app-root",
@@ -19,9 +19,15 @@ export class AppComponent implements OnInit {
   link = ""
   copyLinkText = "(copy link)"
 
+  constructor(private route: ActivatedRoute) {}
+
   ngOnInit(): void {
     this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     this.timeZoneNames = Intl.supportedValuesOf("timeZone")
+
+    this.route.queryParamMap.subscribe(queryParamMap => {
+      this.tryLoadViaParams(queryParamMap)
+    })
   }
 
   timeStringToDate(time: string): Date {
@@ -50,20 +56,37 @@ export class AppComponent implements OnInit {
     let hostname = location.hostname
     if (hostname.includes("localhost"))
       hostname += ":" + location.port
-    return `${location.protocol}//${hostname}?t=${encodeURIComponent(this.timeTextNorm)}&z=${encodeURIComponent(this.timeZone)}`
+    const t = encodeURIComponent(this.timeTextNorm)
+    const z = encodeURIComponent(this.timeZone)
+    return `${location.protocol}//${hostname}?t=${t}&z=${z}`
   }
 
   change(event: Event) {
-    const value = (<HTMLInputElement>event.target).value
-    this.timeText = value
-    const time = this.timeValue = this.timeStringToDate(value)
-    if (!isNaN(time.getTime())) {
-      this.timeTextNorm = this.formatTime(time, this.timeZone)
+    this.update((<HTMLInputElement>event.target).value)
+  }
+
+  update(timeText: string, timeZone?: string) {
+    this.timeText = timeText
+
+    if (timeZone)
+      this.timeZone = timeZone
+
+    const date = this.timeValue = this.timeStringToDate(timeText)
+    if (!isNaN(date.getTime())) {
+      this.timeTextNorm = this.formatTime(date, this.timeZone)
       this.link = this.createLink()
       this.copyLinkText = "(copy link)"
-      this.updateTimeZoneList(time)
+      this.updateTimeZoneList(date)
     } else {
       this.timeZoneList = []
+    }
+  }
+
+  tryLoadViaParams(paramMap: ParamMap) {
+    const time = decodeURIComponent(paramMap.get("t") ?? "")
+    const timeZone = decodeURIComponent(paramMap.get("z") ?? "")
+    if (time && timeZone) {
+      this.update(time, timeZone)
     }
   }
 
