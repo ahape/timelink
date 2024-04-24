@@ -8,15 +8,18 @@
     (input)="change($event)"
   />
   <span class="time-zone">{{ timeZone }}</span>
-  <a class="copy-link"
-     href="javascript:void(0)"
-     [title]="link"
-     (click)="copyLinkToClipboard()"
-  >{{ copyLinkText }}</a>
+
 </div>
 <div>
   @for (item of timeZoneList; track item) {
-    <p>{{ item }}</p>
+    <div>
+      <a class="copy-link"
+         *ngIf="createLink() as link"
+         href="javascript:void(0)"
+         [title]="link"
+         (click)="copyLinkToClipboard(link)"
+      >{{ item }}</a>
+    </div>
   }
 </div>
 <router-outlet />

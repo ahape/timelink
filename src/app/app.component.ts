@@ -1,23 +1,29 @@
+import { CommonModule } from "@angular/common"
 import { Component, OnInit } from "@angular/core"
 import { RouterOutlet, ActivatedRoute, ParamMap } from "@angular/router"
+
+function f(timePart: number): string {
+  return timePart.toString().padStart(2, "0")
+}
+
+const invalidDate = new Date(NaN)
+const seed = new Date()
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, CommonModule],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
 export class AppComponent implements OnInit {
   title = "timelink"
   timeText = ""
-  timeTextNorm = ""
+  timeTextDisplay = ""
   timeValue: Date | undefined
   timeZone = ""
   timeZoneNames: string[] = []
   timeZoneList: string[] = []
-  link = ""
-  copyLinkText = "(copy link)"
 
   constructor(private route: ActivatedRoute) {}
 
@@ -35,16 +41,19 @@ export class AppComponent implements OnInit {
     if (parts.length < 2 ||
         parts.some(p => isNaN(parseInt(p, 10))))
     {
-      return new Date(NaN)
+      return invalidDate
     }
     if (parts.length == 2)
       parts.push("0")
     const [h, m, s] = parts.slice(0, 3).map(p => parseInt(p, 10))
-    const seed = new Date()
-    return new Date(seed.getFullYear(), seed.getDate(), seed.getDay(), h, m, s)
+    return new Date(seed.setHours(h, m, s))
   }
 
-  formatTime(date: Date, timeZone: string): string {
+  formatTimeForRoundTrip(date: Date): string {
+    return `${f(date.getUTCHours())}:${f(date.getUTCMinutes())}:${f(date.getUTCSeconds())}`
+  }
+
+  formatTimeForDisplay(date: Date, timeZone: string): string {
     return Intl.DateTimeFormat("en-US", {
       hour12: false,
       timeStyle: "long",
@@ -56,26 +65,20 @@ export class AppComponent implements OnInit {
     let hostname = location.hostname
     if (hostname.includes("localhost"))
       hostname += ":" + location.port
-    const t = encodeURIComponent(this.timeTextNorm)
-    const z = encodeURIComponent(this.timeZone)
-    return `${location.protocol}//${hostname}?t=${t}&z=${z}`
+    const t = encodeURIComponent(this.formatTimeForRoundTrip(this.timeValue!))
+    return `${location.protocol}//${hostname}?t=${t}`
   }
 
   change(event: Event) {
     this.update((<HTMLInputElement>event.target).value)
   }
 
-  update(timeText: string, timeZone?: string) {
+  update(timeText: string) {
     this.timeText = timeText
 
-    if (timeZone)
-      this.timeZone = timeZone
-
     const date = this.timeValue = this.timeStringToDate(timeText)
-    if (!isNaN(date.getTime())) {
-      this.timeTextNorm = this.formatTime(date, this.timeZone)
-      this.link = this.createLink()
-      this.copyLinkText = "(copy link)"
+    if (date !== invalidDate) {
+      this.timeTextDisplay = this.formatTimeForDisplay(date, this.timeZone)
       this.updateTimeZoneList(date)
     } else {
       this.timeZoneList = []
@@ -84,27 +87,26 @@ export class AppComponent implements OnInit {
 
   tryLoadViaParams(paramMap: ParamMap) {
     const time = decodeURIComponent(paramMap.get("t") ?? "")
-    const timeZone = decodeURIComponent(paramMap.get("z") ?? "")
-    if (time && timeZone) {
-      this.update(time, timeZone)
+    if (time) {
+      const local = new Date(seed.toISOString().replace(/\d{2}:\d{2}:\d{2}/, time))
+      this.update(`${f(local.getHours())}:${f(local.getMinutes())}:${f(local.getSeconds())}`)
     }
   }
 
   updateTimeZoneList(timeValue: Date) {
     const set = new Set<string>();
     for (const timeZone of this.timeZoneNames)
-      set.add(this.formatTime(timeValue, timeZone))
+      set.add(this.formatTimeForDisplay(timeValue, timeZone))
     this.timeZoneList = Array.from(set).sort()
-    const ourIndex = this.timeZoneList.indexOf(this.timeTextNorm)
-    if (ourIndex > -1)
+    const localIndex = this.timeZoneList.indexOf(this.timeTextDisplay)
+    if (localIndex > -1)
       this.timeZoneList = [
-        ...this.timeZoneList.slice(ourIndex), // Make local time the top one
-        ...this.timeZoneList.slice(0, ourIndex),
+        ...this.timeZoneList.slice(localIndex), // Make local time the top one
+        ...this.timeZoneList.slice(0, localIndex),
       ]
   }
 
-  async copyLinkToClipboard() {
-    const text = this.link
+  async copyLinkToClipboard(text: string) {
     try {
       const type = "text/plain";
       const blob = new Blob([text], { type });
@@ -113,6 +115,5 @@ export class AppComponent implements OnInit {
     } catch (e) {
       document.execCommand("copy", false, text)
     }
-    this.copyLinkText = "copied!"
   }
 }
