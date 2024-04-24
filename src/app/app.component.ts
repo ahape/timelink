@@ -28,7 +28,9 @@ export class AppComponent implements OnInit {
     const parts = time.split(":").map(p => p.trim())
     if (parts.length < 2 ||
         parts.some(p => isNaN(parseInt(p, 10))))
+    {
       return new Date(NaN)
+    }
     if (parts.length == 2)
       parts.push("0")
     const [h, m, s] = parts.slice(0, 3).map(p => parseInt(p, 10))
@@ -45,34 +47,35 @@ export class AppComponent implements OnInit {
   }
 
   createLink(): string {
-    return location.protocol + "//" + location.hostname + "?t=" + this.timeTextNorm + "&z=UTC"
+    let hostname = location.hostname
+    if (hostname.includes("localhost"))
+      hostname += ":" + location.port
+    return `${location.protocol}//${hostname}?t=${encodeURIComponent(this.timeTextNorm)}&z=${encodeURIComponent(this.timeZone)}`
   }
 
   change(event: Event) {
     const value = (<HTMLInputElement>event.target).value
     this.timeText = value
     const time = this.timeValue = this.timeStringToDate(value)
-    this.timeTextNorm = this.formatTime(time, this.timeZone)
-    this.link = this.createLink()
-    this.copyLinkText = "(copy link)"
-    this.updateTimeZoneList()
+    if (!isNaN(time.getTime())) {
+      this.timeTextNorm = this.formatTime(time, this.timeZone)
+      this.link = this.createLink()
+      this.copyLinkText = "(copy link)"
+      this.updateTimeZoneList(time)
+    } else {
+      this.timeZoneList = []
+    }
   }
 
-  updateTimeZoneList() {
-    this.timeZoneList.length = 0
-    for (const timeZone of this.timeZoneNames) {
-      if (this.timeValue) {
-        const val = this.formatTime(this.timeValue, timeZone)
-        if (!this.timeZoneList.includes(val))
-          this.timeZoneList.push(val)
-      }
-    }
-    this.timeZoneList.sort()
-
+  updateTimeZoneList(timeValue: Date) {
+    const set = new Set<string>();
+    for (const timeZone of this.timeZoneNames)
+      set.add(this.formatTime(timeValue, timeZone))
+    this.timeZoneList = Array.from(set).sort()
     const ourIndex = this.timeZoneList.indexOf(this.timeTextNorm)
     if (ourIndex > -1)
       this.timeZoneList = [
-        ...this.timeZoneList.slice(ourIndex),
+        ...this.timeZoneList.slice(ourIndex), // Make local time the top one
         ...this.timeZoneList.slice(0, ourIndex),
       ]
   }
