@@ -1,24 +1,23 @@
 <div class="content">
   <input
     class="time-input"
+    type="time"
+    min="00:00"
+    max="23:00"
     autofocus
-    placeholder="ex 13:25:00"
-    type="text"
+    required
     [value]="timeText"
-    (input)="change($event)"
+    (input)="inputChangeHandler($event)"
   />
-  <span class="time-zone">{{ timeZone }}</span>
+  <span
+    class="copy-link"
+    (click)="copyLinkClickHandler()"
+  >(copy)</span>
+  <ul class="time-zone-list">
+    @for (item of timeZoneList; track item) {
+      <li class="time-zone">{{ item }}</li>
+    }
+  </ul>
 </div>
-<div>
-  @for (item of timeZoneList; track item) {
-    <div>
-      <a class="copy-link"
-         *ngIf="createLink() as link"
-         href="javascript:void(0)"
-         [title]="link"
-         (click)="copyLinkToClipboard(link)"
-      >{{ item }}</a>
-    </div>
-  }
-</div>
+
 <router-outlet />
