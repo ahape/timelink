@@ -1,21 +1,31 @@
 <div class="content">
-  <input
-    class="time-input"
-    type="time"
-    min="00:00"
-    max="23:00"
-    autofocus
-    required
-    [value]="timeText"
-    (input)="inputChangeHandler($event)"
-  />
-  <span
-    class="copy-link"
-    (click)="copyLinkClickHandler()"
-  >(copy)</span>
+  <div class="controls">
+    <input
+      class="time-input"
+      type="time"
+      min="00:00"
+      max="23:00"
+      autofocus
+      required
+      [value]="timeText"
+      (input)="inputChangeHandler($event)"
+    />
+    <button
+      class="copy-icon"
+      title="Copy set time as link"
+      (click)="copyLinkClickHandler()"
+    ></button>
+    <span
+      id="copy-feedback"
+      class="copy-feedback"
+    >Copied!</span>
+  </div>
   <ul class="time-zone-list">
     @for (item of timeZoneList; track item) {
-      <li class="time-zone">{{ item }}</li>
+      <li class="time-zone">
+        <span class="time-zone-time">{{ item.substr(0, "00:00:00".length) }}</span>
+        <span class="time-zone-name">{{ item.substr("00:00:00 ".length) }}</span>
+      </li>
     }
   </ul>
 </div>

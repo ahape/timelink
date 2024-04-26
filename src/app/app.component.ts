@@ -84,7 +84,10 @@ export class AppComponent implements OnInit {
 
   async copyLinkClickHandler() {
     if (this.timeValue !== invalidDate) {
+      const feedback = document.getElementById("copy-feedback")
+      feedback?.classList.add("show")
       await this.copyLinkToClipboard(this.createLink())
+      setTimeout(() => feedback?.classList.remove("show"), 1000)
     }
   }
 
