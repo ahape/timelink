@@ -19,7 +19,9 @@
     class="copy-feedback"
   >Copied!</span>
 </div>
-<ul class="time-zone-list">
+<ul
+  class="time-zone-list"
+  id="time-zone-list">
   @for (item of timeZoneList; track item) {
     <li class="time-zone">
       <span class="time-zone-time">{{ item.substr(0, "XXXX-XX-XX XX:XX:XX".length) }}</span>

@@ -159,6 +159,14 @@ export class AppComponent implements OnInit {
       set.add(this.formatTimeForDisplay(timeValue, timeZone))
     }
     this.timeZoneList = [...set].sort()
+    setTimeout(() => this.scrollToLocal(), 1)
+  }
+
+  scrollToLocal() {
+    const list = document.getElementById("time-zone-list")
+    const localIndex = this.timeZoneList.indexOf(this.timeTextDisplay)
+    const el = list?.children[localIndex]
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   async copyLinkToClipboard(text: string) {
