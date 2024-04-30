@@ -27,6 +27,9 @@ export class AppComponent implements OnInit {
     this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     this.timeZoneNames = Intl.supportedValuesOf("timeZone")
 
+    // Start off with the current time
+    this.update(this.formatTime(new Date(), false))
+
     this.route.queryParamMap.subscribe((queryParamMap) => {
       this.tryLoadViaParams(queryParamMap)
     })
@@ -59,8 +62,8 @@ export class AppComponent implements OnInit {
     return [h, m, s]
   }
 
-  formatTimeForRoundTrip(date: Date): string {
-    return this.dateToTimeParts(date, true).join(":")
+  formatTime(date: Date, roundTrip: boolean): string {
+    return this.dateToTimeParts(date, roundTrip).join(":")
   }
 
   formatTimeForDisplay(date: Date, timeZone: string): string {
@@ -74,7 +77,7 @@ export class AppComponent implements OnInit {
   createLink(): string {
     let hostname = location.hostname
     if (hostname.includes("localhost")) hostname += ":" + location.port
-    const t = encodeURIComponent(this.formatTimeForRoundTrip(this.timeValue!))
+    const t = encodeURIComponent(this.formatTime(this.timeValue!, true))
     return `${location.protocol}//${hostname}?t=${t}`
   }
 
@@ -93,8 +96,10 @@ export class AppComponent implements OnInit {
 
       await this.copyLinkToClipboard(this.createLink())
 
-      feedback.dataset["fadeOutHandle"] = setTimeout(() =>
-        feedback.classList.remove("show"), 1000) as any;
+      feedback.dataset["fadeOutHandle"] = setTimeout(
+        () => feedback.classList.remove("show"),
+        1000
+      ) as any
     }
   }
 
@@ -116,7 +121,7 @@ export class AppComponent implements OnInit {
       const local = new Date(
         seed.toISOString().replace(/\d{2}:\d{2}:\d{2}/, time)
       )
-      this.update(this.dateToTimeParts(local, false).join(":"))
+      this.update(this.formatTime(local, false))
     }
   }
 
