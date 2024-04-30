@@ -36,7 +36,7 @@ export class AppComponent implements OnInit {
   }
 
   validateTimeText(time: string): boolean {
-    return /^\d{2}:\d{2}$/.test(time)
+    return /^\d{2}:\d{2}(:\d{2})?$/.test(time)
   }
 
   timeStringToDate(time: string): Date {
@@ -67,11 +67,39 @@ export class AppComponent implements OnInit {
   }
 
   formatTimeForDisplay(date: Date, timeZone: string): string {
-    return Intl.DateTimeFormat("en-US", {
+    const parts = Intl.DateTimeFormat("en-US", {
       hour12: false,
-      timeStyle: "full",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZoneName: "longGeneric",
       timeZone,
-    }).format(date)
+    }).formatToParts(date)
+    const year = parts.find((p) => p.type === "year")?.value!
+    const month = parts.find((p) => p.type === "month")?.value!
+    const day = parts.find((p) => p.type === "day")?.value!
+    const hour = parts.find((p) => p.type === "hour")?.value!
+    const minute = parts.find((p) => p.type === "minute")?.value!
+    const second = parts.find((p) => p.type === "second")?.value!
+    const timeZoneName = parts.find((p) => p.type === "timeZoneName")?.value!
+    return (
+      [
+        year,
+        this.timePartToString(parseInt(month, 10)),
+        this.timePartToString(parseInt(day, 10)),
+      ].join("-") +
+      " " +
+      [
+        this.timePartToString(parseInt(hour, 10)),
+        this.timePartToString(parseInt(minute, 10)),
+        this.timePartToString(parseInt(second, 10)),
+      ].join(":") +
+      " " +
+      timeZoneName
+    )
   }
 
   createLink(): string {
@@ -127,16 +155,10 @@ export class AppComponent implements OnInit {
 
   updateTimeZoneList(timeValue: Date) {
     const set = new Set<string>()
-    for (const timeZone of this.timeZoneNames)
+    for (const timeZone of this.timeZoneNames) {
       set.add(this.formatTimeForDisplay(timeValue, timeZone))
-    let array = Array.from(set).sort()
-    const localIndex = array.indexOf(this.timeTextDisplay)
-    if (localIndex > -1)
-      array = [
-        ...array.slice(localIndex), // Make local time the top one
-        ...array.slice(0, localIndex),
-      ]
-    this.timeZoneList = array
+    }
+    this.timeZoneList = [...set].sort()
   }
 
   async copyLinkToClipboard(text: string) {

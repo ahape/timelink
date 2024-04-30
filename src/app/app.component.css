@@ -1,9 +1,13 @@
-.content {
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   margin: 2em 1em 3em;
 }
 .controls {
   display: flex;
   flex-direction: row;
+  flex-shrink: 0;
   align-items: center;
 }
 .time-input, .time-zone-time, .time-zone-name, .copy-link {
@@ -51,6 +55,8 @@
 .time-zone-list {
   list-style: none;
   padding-left: 0;
+  overflow: auto;
+  flex-grow: 1;
 }
 .time-zone-list>li {
   margin: 5px 0;

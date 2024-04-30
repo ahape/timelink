@@ -1,33 +1,31 @@
-<div class="content">
-  <div class="controls">
-    <input
-      class="time-input"
-      type="time"
-      min="00:00"
-      max="23:00"
-      autofocus
-      required
-      [value]="timeText"
-      (input)="inputChangeHandler($event)"
-    />
-    <button
-      class="copy-icon"
-      title="Copy set time as link"
-      (click)="copyLinkClickHandler()"
-    ></button>
-    <span
-      id="copy-feedback"
-      class="copy-feedback"
-    >Copied!</span>
-  </div>
-  <ul class="time-zone-list">
-    @for (item of timeZoneList; track item) {
-      <li class="time-zone">
-        <span class="time-zone-time">{{ item.substr(0, "00:00:00".length) }}</span>
-        <span class="time-zone-name">{{ item.substr("00:00:00 ".length) }}</span>
-      </li>
-    }
-  </ul>
+<div class="controls">
+  <input
+    class="time-input"
+    type="time"
+    min="00:00"
+    max="23:00"
+    autofocus
+    required
+    [value]="timeText"
+    (input)="inputChangeHandler($event)"
+  />
+  <button
+    class="copy-icon"
+    title="Copy set time as link"
+    (click)="copyLinkClickHandler()"
+  ></button>
+  <span
+    id="copy-feedback"
+    class="copy-feedback"
+  >Copied!</span>
 </div>
+<ul class="time-zone-list">
+  @for (item of timeZoneList; track item) {
+    <li class="time-zone">
+      <span class="time-zone-time">{{ item.substr(0, "XXXX-XX-XX XX:XX:XX".length) }}</span>
+      <span class="time-zone-name">{{ item.substr("XXXX-XX-XX XX:XX:XX ".length) }}</span>
+    </li>
+  }
+</ul>
 
 <router-outlet />
