@@ -20,6 +20,7 @@ export class AppComponent implements OnInit {
   timeZone = ""
   timeZoneNames: string[] = []
   timeZoneList: string[] = []
+  regionLookup: Record<string, string[]> = {}
 
   constructor(private route: ActivatedRoute) {}
 
@@ -85,21 +86,22 @@ export class AppComponent implements OnInit {
     const minute = parts.find((p) => p.type === "minute")?.value!
     const second = parts.find((p) => p.type === "second")?.value!
     const timeZoneName = parts.find((p) => p.type === "timeZoneName")?.value!
-    return (
-      [
-        year,
-        this.timePartToString(parseInt(month, 10)),
-        this.timePartToString(parseInt(day, 10)),
-      ].join("-") +
-      " " +
-      [
-        this.timePartToString(parseInt(hour, 10)),
-        this.timePartToString(parseInt(minute, 10)),
-        this.timePartToString(parseInt(second, 10)),
-      ].join(":") +
-      " " +
-      timeZoneName
-    )
+    const parts2 = Intl.DateTimeFormat("en-US", {
+      timeZoneName: "shortOffset",
+      timeZone,
+    }).formatToParts(date)
+    const gmtOffset = parts2.find(p => p.type === "timeZoneName")?.value!
+    const ymd = [
+      year,
+      this.timePartToString(parseInt(month, 10)),
+      this.timePartToString(parseInt(day, 10)),
+    ].join("-");
+    const hms = [
+      this.timePartToString(parseInt(hour, 10)),
+      this.timePartToString(parseInt(minute, 10)),
+      this.timePartToString(parseInt(second, 10)),
+    ].join(":")
+    return `${ymd} ${hms} ${timeZoneName} (${gmtOffset})`
   }
 
   createLink(): string {
@@ -156,7 +158,9 @@ export class AppComponent implements OnInit {
   updateTimeZoneList(timeValue: Date) {
     const set = new Set<string>()
     for (const timeZone of this.timeZoneNames) {
-      set.add(this.formatTimeForDisplay(timeValue, timeZone))
+      const generic = this.formatTimeForDisplay(timeValue, timeZone)
+      set.add(generic)
+      ;(this.regionLookup[generic] ??= []).push(timeZone)
     }
     this.timeZoneList = [...set].sort()
     setTimeout(() => this.scrollToLocal(), 1)

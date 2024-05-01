@@ -53,13 +53,24 @@
 .copy-feedback.show {
   opacity: 0.5;
 }
+.time-zones-area {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  overflow: auto;
+}
+/* TODO: set CSS breakpoint on some min-width */
+.regions {
+  flex-shrink: 0;
+  flex-grow: 1;
+}
 .time-zone-list {
   list-style: none;
   padding-left: 0;
-  overflow: auto;
-  flex-grow: 1;
+  overflow-y: auto;
 }
 .time-zone-list>li {
+  cursor: default;
   margin: 5px 0;
 }
 .time-zone-time {
