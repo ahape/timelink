@@ -16,21 +16,25 @@ const seed = new Date()
 })
 export class AppComponent implements OnInit {
   title = "timelink"
+  /** <input type="time" /> value */
   timeText = ""
-  currentTimeZoneInfo: TimeZoneInfo | undefined;
   timeValue = invalidDate
-  timeZone = ""
+  /** IANA time zone name */
+  currentTimeZoneName = ""
+  currentTimeZoneInfo: TimeZoneInfo | undefined
   /** IANA time zone names */
   timeZoneNames: string[] = []
-  timeZoneList: TimeZoneInfo[] = []
+  timeZoneInfos: TimeZoneInfo[] = []
+  regionsDisplayed: string[] = []
+  regionsDisplayedLocked = false
+  lastHoveredInfo: TimeZoneInfo | undefined
 
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    this.currentTimeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone
     this.timeZoneNames = Intl.supportedValuesOf("timeZone")
 
-    // Start off with the current time
     this.update(this.formatTime(new Date(), false))
 
     this.route.queryParamMap.subscribe((queryParamMap) => {
@@ -48,21 +52,20 @@ export class AppComponent implements OnInit {
     return new Date(seed.setHours(h, m, 0))
   }
 
-  timePartToString(timePart: number): string {
-    return timePart.toString().padStart(2, "0")
+  timePartToString(timePart: string): string
+  timePartToString(timePart: number): string
+  timePartToString(timePart: number | string): string {
+    if (typeof timePart === "string") timePart = parseInt(timePart, 10)
+    return String(timePart).padStart(2, "0")
   }
 
   dateToTimeParts(date: Date, asUtc: boolean): [string, string, string] {
-    const h = this.timePartToString(
-      asUtc ? date.getUTCHours() : date.getHours()
-    )
-    const m = this.timePartToString(
-      asUtc ? date.getUTCMinutes() : date.getMinutes()
-    )
-    const s = this.timePartToString(
-      asUtc ? date.getUTCSeconds() : date.getSeconds()
-    )
-    return [h, m, s]
+    const UTC = asUtc ? "UTC" : ""
+    return [
+      this.timePartToString(date[`get${UTC}Hours`]()),
+      this.timePartToString(date[`get${UTC}Minutes`]()),
+      this.timePartToString(date[`get${UTC}Seconds`]()),
+    ]
   }
 
   formatTime(date: Date, roundTrip: boolean): string {
@@ -81,33 +84,28 @@ export class AppComponent implements OnInit {
       timeZoneName: "longGeneric",
       timeZone,
     }).formatToParts(date)
-    const year = parts.find((p) => p.type === "year")?.value!
-    const month = parts.find((p) => p.type === "month")?.value!
-    const day = parts.find((p) => p.type === "day")?.value!
-    const hour = parts.find((p) => p.type === "hour")?.value!
-    const minute = parts.find((p) => p.type === "minute")?.value!
-    const second = parts.find((p) => p.type === "second")?.value!
-    const timeZoneName = parts.find((p) => p.type === "timeZoneName")?.value!
-    const parts2 = Intl.DateTimeFormat("en-US", {
+    const partsShort = Intl.DateTimeFormat("en-US", {
       timeZoneName: "shortOffset",
       timeZone,
     }).formatToParts(date)
-    const gmtOffset = parts2.find(p => p.type === "timeZoneName")?.value!
     const ymd = [
-      year,
-      this.timePartToString(parseInt(month, 10)),
-      this.timePartToString(parseInt(day, 10)),
-    ].join("-");
+      getPart(parts, "year"),
+      this.timePartToString(getPart(parts, "month")),
+      this.timePartToString(getPart(parts, "day")),
+    ].join("-")
     const hms = [
-      this.timePartToString(parseInt(hour, 10)),
-      this.timePartToString(parseInt(minute, 10)),
-      this.timePartToString(parseInt(second, 10)),
+      this.timePartToString(getPart(parts, "hour")),
+      this.timePartToString(getPart(parts, "minute")),
+      this.timePartToString(getPart(parts, "second")),
     ].join(":")
     return {
       time: `${ymd} ${hms}`,
-      name: timeZoneName,
-      gmtOffset,
+      name: getPart(parts, "timeZoneName"),
+      gmtOffset: getPart(partsShort, "timeZoneName"),
       regions: [],
+    }
+    function getPart(parts: Intl.DateTimeFormatPart[], type: string): string {
+      return parts.find((p) => p.type === type)?.value!
     }
   }
 
@@ -118,66 +116,123 @@ export class AppComponent implements OnInit {
     return `${location.protocol}//${hostname}?t=${t}`
   }
 
-  inputChangeHandler(event: Event) {
-    this.update((<HTMLInputElement>event.target).value)
+  displayRegionsFor(info: TimeZoneInfo) {
+    const hovered = this.timeZoneInfos.find((x) => x.name === info.name)
+    this.regionsDisplayed = hovered?.regions ?? []
   }
 
+  deselectInfo() {
+    const cleanUp = Array.from(document.getElementsByClassName("selected"))
+    for (const el of cleanUp) el.classList.remove("selected")
+    this.regionsDisplayed = []
+  }
+
+  selectInfo(infoElement: HTMLElement, info: TimeZoneInfo) {
+    infoElement.classList.add("selected")
+    this.displayRegionsFor(info)
+    this.regionsDisplayedLocked = true
+  }
+
+  infoScrollHandler() {
+    if (this.regionsDisplayedLocked) {
+      this.regionsDisplayedLocked = false
+      this.deselectInfo()
+      if (this.lastHoveredInfo) this.displayRegionsFor(this.lastHoveredInfo)
+    }
+  }
+
+  hoverHandler(info: TimeZoneInfo) {
+    if (!this.regionsDisplayedLocked) {
+      this.displayRegionsFor(info)
+    }
+    this.lastHoveredInfo = info
+  }
+
+  infoClickHandler(event: Event, info: TimeZoneInfo) {
+    this.deselectInfo()
+    this.selectInfo(event.target as HTMLElement, info)
+  }
+
+  inputChangeHandler(event: Event) {
+    this.update((event.target as HTMLInputElement).value)
+  }
+
+  /** After clicking copy, a little tooltip-esque element fades in and out */
   async copyLinkClickHandler() {
+    let feedback: HTMLElement
     if (this.timeValue !== invalidDate) {
-      const feedback = document.getElementById("copy-feedback")!
+      feedback = document.getElementById("copy-feedback")!
       if (feedback.classList.contains("show")) {
-        clearTimeout(Number(feedback.dataset["fadeOutHandle"]))
-        feedback.classList.remove("show")
+        fadeOutDone()
       }
       feedback.classList.add("show")
 
       await this.copyLinkToClipboard(this.createLink())
 
-      feedback.dataset["fadeOutHandle"] = setTimeout(
-        () => feedback.classList.remove("show"),
-        1000
-      ) as any
+      feedback.dataset["fadeOutHandle"] = <any>setTimeout(fadeOutDone, 1000)
+    }
+
+    function fadeOutDone() {
+      const timeoutHandle = feedback?.dataset["fadeOutHandle"]
+      if (timeoutHandle) clearTimeout(parseInt(timeoutHandle, 10))
+      feedback?.classList.remove("show")
     }
   }
 
   update(timeText: string) {
     this.timeText = timeText
-    const date = (this.timeValue = this.timeStringToDate(timeText))
-    if (date !== invalidDate) {
-      this.currentTimeZoneInfo = this.createTimeZoneInfo(date, this.timeZone)
-      this.updateTimeZoneList(date)
+    this.timeValue = this.timeStringToDate(timeText)
+    if (this.timeValue !== invalidDate) {
+      this.currentTimeZoneInfo = this.createTimeZoneInfo(
+        this.timeValue,
+        this.currentTimeZoneName
+      )
+      this.updateTimeZoneList(this.timeValue)
     } else {
-      this.timeZoneList = []
+      this.timeZoneInfos = []
     }
   }
 
   tryLoadViaParams(paramMap: ParamMap) {
-    const time = decodeURIComponent(paramMap.get("t") ?? "")
-    if (time) {
-      const local = new Date(
-        seed.toISOString().replace(/\d{2}:\d{2}:\d{2}/, time)
-      )
-      this.update(this.formatTime(local, false))
+    const paramTime = decodeURIComponent(paramMap.get("t") ?? "")
+    if (paramTime) {
+      // 2024-05-01T10:10:10.000Z
+      //            ^^ ^^ ^^
+      // Swap out these for the passed in param of "HH:MM:SS"
+      const modifiedIso = seed
+        .toISOString()
+        .replace(/\d{2}:\d{2}:\d{2}/, paramTime)
+      const localTimeText = this.formatTime(new Date(modifiedIso), false)
+      this.update(localTimeText)
     }
   }
 
   updateTimeZoneList(timeValue: Date) {
-    const dict: Record<string, TimeZoneInfo>= {}
-    for (const ianaTz of this.timeZoneNames) {
-      let info = this.createTimeZoneInfo(timeValue, ianaTz)
-      info = (dict[info.name] ??= info) // Take existing entry, otherwise this new one
-      info.regions.push(ianaTz)
+    const dict: Record<string, TimeZoneInfo> = {}
+    for (const tz of this.timeZoneNames) {
+      let info = this.createTimeZoneInfo(timeValue, tz)
+      info = dict[info.name] ??= info // Take existing entry, otherwise the new one
+      info.regions.push(tz)
     }
-    this.timeZoneList = Object.values(dict).sort((a, b) => a.time.localeCompare(b.time))
-    setTimeout(() => this.scrollToLocal(), 1)
+    this.timeZoneInfos = Object.values(dict).sort((a, b) =>
+      a.time.localeCompare(b.time)
+    )
+    setTimeout(() => this.scrollToLocal(), 1) // Needs to be deferred
   }
 
   scrollToLocal() {
-    const list = document.getElementById("time-zone-list")
-    const localIndex = this.timeZoneList.findIndex(info =>
-      info.name === this.currentTimeZoneInfo?.name)
-    const el = list?.children[localIndex]
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+    const listElement = document.getElementById(
+      "time-zone-list"
+    ) as HTMLUListElement
+    const localIndex = this.timeZoneInfos.findIndex(
+      (info) => info.name === this.currentTimeZoneInfo?.name
+    )
+    if (listElement && localIndex !== -1) {
+      listElement.children[localIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }
   }
 
   async copyLinkToClipboard(text: string) {

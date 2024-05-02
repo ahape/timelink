@@ -2,6 +2,10 @@
   cursor: default;
   margin: 5px 0;
 }
+.time-zone-info:hover .time-zone-name,
+.time-zone-name.selected {
+  color: #9ecbff;
+}
 .time-zone-time {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   margin-right: 10px;
@@ -14,6 +18,7 @@
 }
 .time-zone-name {
   margin-right: 10px;
+  cursor: pointer;
 }
 .time-zone-offset {
   color: rgb(101, 117, 133)

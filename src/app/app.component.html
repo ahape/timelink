@@ -22,12 +22,22 @@
 <div class="time-zones-area">
   <ul
     class="time-zone-list"
-    id="time-zone-list">
-    @for (item of timeZoneList; track item) {
-      <li app-time-zone-list-item [timeZoneInfo]="item"></li>
+    id="time-zone-list"
+    (scroll)="infoScrollHandler()">
+    @for (info of timeZoneInfos; track info) {
+      <li
+        app-time-zone-list-item
+        [timeZoneInfo]="info"
+        (mouseover)="hoverHandler(info)"
+        (click)="infoClickHandler($event, info)"
+      ></li>
     }
   </ul>
-  <div class="regions"></div>
+  <ol class="regions">
+    @for (region of regionsDisplayed; track region) {
+      <li class="region">{{ region }}</li>
+    }
+  </ol>
 </div>
 
 <router-outlet />

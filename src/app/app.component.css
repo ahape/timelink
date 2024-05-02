@@ -59,13 +59,18 @@
   flex-grow: 1;
   overflow: auto;
 }
-/* TODO: set CSS breakpoint on some min-width */
-.regions {
-  flex-shrink: 0;
-  flex-grow: 1;
-}
 .time-zone-list {
   list-style: none;
   padding-left: 0;
   overflow-y: auto;
+}
+/* TODO: set CSS breakpoint on some min-width */
+.regions {
+  flex-shrink: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+.region {
+  color: #9ecbff;
+  cursor: default;
 }
