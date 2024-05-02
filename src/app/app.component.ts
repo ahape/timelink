@@ -1,6 +1,8 @@
 import { CommonModule } from "@angular/common"
 import { Component, OnInit } from "@angular/core"
 import { RouterOutlet, ActivatedRoute, ParamMap } from "@angular/router"
+import { TimeZoneListItemComponent } from "./time-zone-list-item/time-zone-list-item.component"
+import { TimeZoneInfo } from "./timeZoneInfo"
 
 const invalidDate = new Date(NaN)
 const seed = new Date()
@@ -8,19 +10,19 @@ const seed = new Date()
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, TimeZoneListItemComponent],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.css",
 })
 export class AppComponent implements OnInit {
   title = "timelink"
   timeText = ""
-  timeTextDisplay = ""
+  currentTimeZoneInfo: TimeZoneInfo | undefined;
   timeValue = invalidDate
   timeZone = ""
+  /** IANA time zone names */
   timeZoneNames: string[] = []
-  timeZoneList: string[] = []
-  regionLookup: Record<string, string[]> = {}
+  timeZoneList: TimeZoneInfo[] = []
 
   constructor(private route: ActivatedRoute) {}
 
@@ -67,7 +69,7 @@ export class AppComponent implements OnInit {
     return this.dateToTimeParts(date, roundTrip).join(":")
   }
 
-  formatTimeForDisplay(date: Date, timeZone: string): string {
+  createTimeZoneInfo(date: Date, timeZone: string): TimeZoneInfo {
     const parts = Intl.DateTimeFormat("en-US", {
       hour12: false,
       year: "numeric",
@@ -101,7 +103,12 @@ export class AppComponent implements OnInit {
       this.timePartToString(parseInt(minute, 10)),
       this.timePartToString(parseInt(second, 10)),
     ].join(":")
-    return `${ymd} ${hms} ${timeZoneName} (${gmtOffset})`
+    return {
+      time: `${ymd} ${hms}`,
+      name: timeZoneName,
+      gmtOffset,
+      regions: [],
+    }
   }
 
   createLink(): string {
@@ -135,10 +142,9 @@ export class AppComponent implements OnInit {
 
   update(timeText: string) {
     this.timeText = timeText
-
     const date = (this.timeValue = this.timeStringToDate(timeText))
     if (date !== invalidDate) {
-      this.timeTextDisplay = this.formatTimeForDisplay(date, this.timeZone)
+      this.currentTimeZoneInfo = this.createTimeZoneInfo(date, this.timeZone)
       this.updateTimeZoneList(date)
     } else {
       this.timeZoneList = []
@@ -156,19 +162,20 @@ export class AppComponent implements OnInit {
   }
 
   updateTimeZoneList(timeValue: Date) {
-    const set = new Set<string>()
-    for (const timeZone of this.timeZoneNames) {
-      const generic = this.formatTimeForDisplay(timeValue, timeZone)
-      set.add(generic)
-      ;(this.regionLookup[generic] ??= []).push(timeZone)
+    const dict: Record<string, TimeZoneInfo>= {}
+    for (const ianaTz of this.timeZoneNames) {
+      let info = this.createTimeZoneInfo(timeValue, ianaTz)
+      info = (dict[info.name] ??= info) // Take existing entry, otherwise this new one
+      info.regions.push(ianaTz)
     }
-    this.timeZoneList = [...set].sort()
+    this.timeZoneList = Object.values(dict).sort((a, b) => a.time.localeCompare(b.time))
     setTimeout(() => this.scrollToLocal(), 1)
   }
 
   scrollToLocal() {
     const list = document.getElementById("time-zone-list")
-    const localIndex = this.timeZoneList.indexOf(this.timeTextDisplay)
+    const localIndex = this.timeZoneList.findIndex(info =>
+      info.name === this.currentTimeZoneInfo?.name)
     const el = list?.children[localIndex]
     el?.scrollIntoView({ behavior: "smooth", block: "start" })
   }

@@ -1,0 +1,20 @@
+.time-zone-info {
+  cursor: default;
+  margin: 5px 0;
+}
+.time-zone-time {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  margin-right: 10px;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background-color: rgba(101, 117, 133, .16);
+  font-size: .875em;
+  color: #a8b1ff;
+  transition: color .25s, background-color .5s;
+}
+.time-zone-name {
+  margin-right: 10px;
+}
+.time-zone-offset {
+  color: rgb(101, 117, 133)
+}
