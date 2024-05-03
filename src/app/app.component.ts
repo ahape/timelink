@@ -3,6 +3,8 @@ import { Component, OnInit } from "@angular/core"
 import { RouterOutlet, ActivatedRoute, ParamMap } from "@angular/router"
 import { TimeZoneListItemComponent } from "./time-zone-list-item/time-zone-list-item.component"
 import { TimeZoneInfo } from "./timeZoneInfo"
+import { BehaviorSubject } from "rxjs"
+import { Lookup } from "./lookup"
 
 const invalidDate = new Date(NaN)
 const seed = new Date()
@@ -24,7 +26,8 @@ export class AppComponent implements OnInit {
   currentTimeZoneInfo: TimeZoneInfo | undefined
   /** IANA time zone names */
   timeZoneNames: string[] = []
-  timeZoneInfos: TimeZoneInfo[] = []
+  timeZoneInfos = new BehaviorSubject<TimeZoneInfo[]>([]);
+  timeZoneInfosByGmtOffset = new Lookup<TimeZoneInfo>()
   regionsDisplayed: string[] = []
   regionsDisplayedLocked = false
   lastHoveredInfo: TimeZoneInfo | undefined
@@ -34,6 +37,12 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.currentTimeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone
     this.timeZoneNames = Intl.supportedValuesOf("timeZone")
+    this.timeZoneInfos.subscribe(value => {
+      this.timeZoneInfosByGmtOffset.clear()
+      value.forEach(info => {
+        this.timeZoneInfosByGmtOffset.addOrUpdate(info.gmtOffset, info)
+      })
+    })
 
     this.update(this.formatTime(new Date(), false))
 
@@ -117,7 +126,7 @@ export class AppComponent implements OnInit {
   }
 
   displayRegionsFor(info: TimeZoneInfo) {
-    const hovered = this.timeZoneInfos.find((x) => x.name === info.name)
+    const hovered = this.timeZoneInfos.getValue().find((x) => x.name === info.name)
     this.regionsDisplayed = hovered?.regions ?? []
   }
 
@@ -189,7 +198,7 @@ export class AppComponent implements OnInit {
       )
       this.updateTimeZoneList(this.timeValue)
     } else {
-      this.timeZoneInfos = []
+      this.timeZoneInfos.next([])
     }
   }
 
@@ -214,18 +223,20 @@ export class AppComponent implements OnInit {
       info = dict[info.name] ??= info // Take existing entry, otherwise the new one
       info.regions.push(tz)
     }
-    this.timeZoneInfos = Object.values(dict).sort((a, b) =>
+    const sortedInfos = Object.values(dict).sort((a, b) =>
       a.time.localeCompare(b.time)
-    )
-    setTimeout(() => this.scrollToLocal(), 1) // Needs to be deferred
+    );
+    this.timeZoneInfos.next(sortedInfos)
+    // Needs to be deferred
+    setTimeout(this.scrollToInfo, 1, sortedInfos, this.currentTimeZoneInfo?.name)
   }
 
-  scrollToLocal() {
+  scrollToInfo(infos: TimeZoneInfo[], infoName: string) {
     const listElement = document.getElementById(
       "time-zone-list"
     ) as HTMLUListElement
-    const localIndex = this.timeZoneInfos.findIndex(
-      (info) => info.name === this.currentTimeZoneInfo?.name
+    const localIndex = infos.findIndex(
+      (info) => info.name === infoName
     )
     if (listElement && localIndex !== -1) {
       listElement.children[localIndex]?.scrollIntoView({
