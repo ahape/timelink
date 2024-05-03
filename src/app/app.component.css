@@ -67,11 +67,16 @@
 .time-zone-offset {
   color: rgb(101, 117, 133)
 }
-/* TODO: set CSS breakpoint on some min-width */
 .regions {
-  flex-shrink: 0;
-  flex-grow: 1;
-  overflow-y: auto;
+  display: none;
+}
+@media only screen and (min-width: 900px) {
+  .regions {
+    display: block;
+    flex-shrink: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
 }
 .region {
   color: #9ecbff;
