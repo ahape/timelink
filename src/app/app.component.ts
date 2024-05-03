@@ -125,11 +125,8 @@ export class AppComponent implements OnInit {
     return `${location.protocol}//${hostname}?t=${t}`
   }
 
-  displayRegionsFor(info: TimeZoneInfo) {
-    const hovered = this.timeZoneInfos
-      .getValue()
-      .find((x) => x.name === info.name)
-    this.regionsDisplayed = hovered?.regions ?? []
+  displayRegionsFor(info?: TimeZoneInfo) {
+    this.regionsDisplayed = info?.regions ?? []
   }
 
   deselectInfo() {
