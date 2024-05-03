@@ -24,11 +24,11 @@
     class="time-zone-list"
     id="time-zone-list"
     (scroll)="infoScrollHandler()">
-    @for (kv of timeZoneInfosByGmtOffset.pairs(); track kv) {
-      <li class="time-zone-offset">{{ kv[0] }}</li>
+    @for (kv of timeZoneInfosByGmtOffset.pairs(); track kv[0]) {
+      <li class="time-zone-offset">({{ kv[0] }})</li>
       @for (info of kv[1]; track info) {
-        <li
-          app-time-zone-list-item
+        <li app-time-zone-list-item
+          [attr.id]="info.name"
           [timeZoneInfo]="info"
           (mouseover)="hoverHandler(info)"
           (click)="infoClickHandler($event, info)"

@@ -64,6 +64,9 @@
   padding-left: 0;
   overflow-y: auto;
 }
+.time-zone-offset {
+  color: rgb(101, 117, 133)
+}
 /* TODO: set CSS breakpoint on some min-width */
 .regions {
   flex-shrink: 0;

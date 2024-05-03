@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
   currentTimeZoneInfo: TimeZoneInfo | undefined
   /** IANA time zone names */
   timeZoneNames: string[] = []
-  timeZoneInfos = new BehaviorSubject<TimeZoneInfo[]>([]);
+  timeZoneInfos = new BehaviorSubject<TimeZoneInfo[]>([])
   timeZoneInfosByGmtOffset = new Lookup<TimeZoneInfo>()
   regionsDisplayed: string[] = []
   regionsDisplayedLocked = false
@@ -37,9 +37,9 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.currentTimeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone
     this.timeZoneNames = Intl.supportedValuesOf("timeZone")
-    this.timeZoneInfos.subscribe(value => {
+    this.timeZoneInfos.subscribe((value) => {
       this.timeZoneInfosByGmtOffset.clear()
-      value.forEach(info => {
+      value.forEach((info) => {
         this.timeZoneInfosByGmtOffset.addOrUpdate(info.gmtOffset, info)
       })
     })
@@ -126,7 +126,9 @@ export class AppComponent implements OnInit {
   }
 
   displayRegionsFor(info: TimeZoneInfo) {
-    const hovered = this.timeZoneInfos.getValue().find((x) => x.name === info.name)
+    const hovered = this.timeZoneInfos
+      .getValue()
+      .find((x) => x.name === info.name)
     this.regionsDisplayed = hovered?.regions ?? []
   }
 
@@ -225,25 +227,18 @@ export class AppComponent implements OnInit {
     }
     const sortedInfos = Object.values(dict).sort((a, b) =>
       a.time.localeCompare(b.time)
-    );
+    )
     this.timeZoneInfos.next(sortedInfos)
     // Needs to be deferred
-    setTimeout(this.scrollToInfo, 1, sortedInfos, this.currentTimeZoneInfo?.name)
+    setTimeout(this.scrollToInfo, 1, this.currentTimeZoneInfo?.name)
   }
 
-  scrollToInfo(infos: TimeZoneInfo[], infoName: string) {
-    const listElement = document.getElementById(
-      "time-zone-list"
-    ) as HTMLUListElement
-    const localIndex = infos.findIndex(
-      (info) => info.name === infoName
-    )
-    if (listElement && localIndex !== -1) {
-      listElement.children[localIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      })
-    }
+  scrollToInfo(infoName: string) {
+    const infoListItem = document.getElementById(infoName)
+    infoListItem?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
   }
 
   async copyLinkToClipboard(text: string) {
