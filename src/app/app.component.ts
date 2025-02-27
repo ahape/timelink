@@ -93,8 +93,12 @@ export class AppComponent implements OnInit {
       timeZoneName: "longGeneric",
       timeZone,
     }).formatToParts(date)
-    const partsShort = Intl.DateTimeFormat("en-US", {
+    const partsShortOffset = Intl.DateTimeFormat("en-US", {
       timeZoneName: "shortOffset",
+      timeZone,
+    }).formatToParts(date)
+    const partsShort = Intl.DateTimeFormat("en-US", {
+      timeZoneName: "short",
       timeZone,
     }).formatToParts(date)
     const ymd = [
@@ -107,10 +111,13 @@ export class AppComponent implements OnInit {
       this.timePartToString(getPart(parts, "minute")),
       this.timePartToString(getPart(parts, "second")),
     ].join(":")
+    const shortName = getPart(partsShort, "timeZoneName")
+    const gmtOffset = getPart(partsShortOffset, "timeZoneName")
     return {
       time: `${ymd} ${hms}`,
       name: getPart(parts, "timeZoneName"),
-      gmtOffset: getPart(partsShort, "timeZoneName"),
+      shortName: shortName === gmtOffset ? "" : shortName,
+      gmtOffset,
       regions: [],
     }
     function getPart(parts: Intl.DateTimeFormatPart[], type: string): string {

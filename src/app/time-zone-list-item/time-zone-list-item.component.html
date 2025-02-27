@@ -1,4 +1,7 @@
 <div class="time-zone-info">
   <span class="time-zone-time">{{ timeZoneInfo.time }}</span>
   <span class="time-zone-name">{{ timeZoneInfo.name }}</span>
+  @if (timeZoneInfo.shortName) {
+      <span class="time-zone-name">({{ timeZoneInfo.shortName }})</span>
+  }
 </div>

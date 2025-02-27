@@ -1,7 +1,9 @@
 export type TimeZoneInfo = {
-  /** Long, generic name for a time zone */
+  /** @example "Pacific Standard Time" */
   name: string
-  /** @example "(GMT-2)"" */
+  /** @example "PST" */
+  shortName: string
+  /** @example "(GMT-2)" */
   gmtOffset: string
   /** @example "13:12:11" */
   time: string
